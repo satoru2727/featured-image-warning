@@ -1,11 +1,17 @@
 <?php
 /**
  * Plugin Name: Featured Image Warning
- * Description: アイキャッチ画像が設定されていない場合に編集画面で警告を表示します。
- * Version: 1.0.0
- * Author: satoru
- * License: GPL-2.0-or-later
+ * Plugin URI:  https://github.com/satoru2727/featured-image-warning
+ * Description: Warns editors when a post is missing a featured image, in both the Classic Editor and Block Editor.
+ * Version:     1.0.0
+ * Author:      satoru2727
+ * Author URI:  https://github.com/satoru2727
+ * License:     GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: featured-image-warning
+ * Domain Path: /languages
+ * Requires at least: 6.0
+ * Requires PHP:      7.4
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -32,18 +38,22 @@ function fiw_admin_notices() {
 		return;
 	}
 
-	// Gutenberg が有効な場合はスキップ（JS 側で処理）
+	// ブロックエディタの場合はスキップ（JS 側で処理）
 	if ( $screen->is_block_editor() ) {
 		return;
 	}
 
-	$post_id = get_the_ID();
+	// 編集権限チェック
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		return;
+	}
+
+	$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( ! $post_id ) {
 		return;
 	}
 
-	$thumbnail_id = get_post_thumbnail_id( $post_id );
-	if ( $thumbnail_id ) {
+	if ( get_post_thumbnail_id( $post_id ) ) {
 		return;
 	}
 
@@ -57,12 +67,6 @@ function fiw_admin_notices() {
 	<?php
 }
 add_action( 'admin_notices', 'fiw_admin_notices' );
-
-/**
- * ブロックエディタ用: REST API でアイキャッチ状態を返すエンドポイント
- * (JS 側から叩く用。実際の判定は JS 内の store で行うが、
- *  wp.data で直接取得できるので追加エンドポイントは不要)
- */
 
 /**
  * ブロックエディタ用スクリプトを登録・エンキュー
@@ -82,7 +86,7 @@ function fiw_enqueue_block_editor_assets() {
 		$asset = require $asset_file;
 	} else {
 		$asset = array(
-			'dependencies' => array( 'wp-plugins', 'wp-edit-post', 'wp-element', 'wp-components', 'wp-data', 'wp-i18n', 'wp-notices' ),
+			'dependencies' => array( 'wp-plugins', 'wp-edit-post', 'wp-element', 'wp-components', 'wp-data', 'wp-i18n' ),
 			'version'      => FIW_VERSION,
 		);
 	}
@@ -95,6 +99,6 @@ function fiw_enqueue_block_editor_assets() {
 		true
 	);
 
-	wp_set_script_translations( 'fiw-block-editor', 'featured-image-warning' );
+	wp_set_script_translations( 'fiw-block-editor', 'featured-image-warning', FIW_PLUGIN_DIR . 'languages' );
 }
 add_action( 'enqueue_block_editor_assets', 'fiw_enqueue_block_editor_assets' );
