@@ -1,0 +1,13 @@
+{
+  "name": "featured-image-warning",
+  "version": "1.0.0",
+  "description": "アイキャッチ画像が未設定の場合に編集画面で警告を表示するWordPressプラグイン",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "lint:js": "wp-scripts lint-js"
+  },
+  "devDependencies": {
+    "@wordpress/scripts": "^30.0.0"
+  }
+}
